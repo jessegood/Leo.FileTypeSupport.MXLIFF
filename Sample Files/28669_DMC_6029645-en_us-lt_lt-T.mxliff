@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns:m="http://www.memsource.com/mxlf/2.0" xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2" m:version="2.0" m:level="1">
+<file original="28669_DMC_6029645.xlsx" source-language="en-us" target-language="lt-lt" datatype="x-undefined" m:task-id="0WCYS8zqosBray1l1">
+<body>
+<group id="0">
+<context-group>
+<context context-type="x-file-part">xl/sharedStrings.xml</context>
+</context-group>
+<trans-unit id="0WCYS8zqosBray1l1:0" m:para-id="2-tu1" xml:space="preserve" m:trans-origin="null" m:score="0" m:gross-score="0" m:confirmed="1" m:locked="false" m:level-edited="false" m:created-by="49450" m:created-at="1442824850898" m:modified-by="49450" m:modified-at="1442824857472">
+<source>Follow us</source>
+<target>Stebėkite mus</target>
+<alt-trans origin="machine-trans">
+<target></target>
+</alt-trans>
+<alt-trans origin="memsource-tm">
+<target></target>
+</alt-trans>
+<m:tunit-metadata/>
+<m:tunit-target-metadata/>
+</trans-unit>
+</group>
+<group id="1">
+<context-group>
+<context context-type="x-file-part">xl/sharedStrings.xml</context>
+</context-group>
+<trans-unit id="0WCYS8zqosBray1l1:1" m:para-id="2-tu2" xml:space="preserve" m:trans-origin="tm" m:score="0.666667" m:gross-score="0.666667" m:confirmed="1" m:locked="false" m:level-edited="false" m:created-by="49450" m:created-at="1442824857502" m:modified-by="49450" m:modified-at="1442824868939">
+<source>MSDN Newsletter</source>
+<target>MSDN informacinis biuletenis</target>
+<alt-trans origin="machine-trans">
+<target></target>
+</alt-trans>
+<alt-trans origin="memsource-tm">
+<target>Informacinis biuletenis</target>
+</alt-trans>
+<m:tunit-metadata/>
+<m:tunit-target-metadata/>
+</trans-unit>
+</group>
+<group id="2">
+<context-group>
+<context context-type="x-file-part">xl/sharedStrings.xml</context>
+</context-group>
+<trans-unit id="0WCYS8zqosBray1l1:2" m:para-id="2-tu3" xml:space="preserve" m:trans-origin="null" m:score="0" m:gross-score="0" m:confirmed="1" m:locked="false" m:level-edited="false" m:created-by="49450" m:created-at="1442824889491" m:modified-by="49450" m:modified-at="1442824904410">
+<source>Sign up for the MSDN Newsletter</source>
+<target>Užsiregistruokite gauti MSDN informacinį biuletenį</target>
+<alt-trans origin="machine-trans">
+<target></target>
+</alt-trans>
+<alt-trans origin="memsource-tm">
+<target></target>
+</alt-trans>
+<m:tunit-metadata/>
+<m:tunit-target-metadata/>
+</trans-unit>
+</group>
+<group id="3">
+<context-group>
+<context context-type="x-file-part">xl/sharedStrings.xml</context>
+</context-group>
+<trans-unit id="0WCYS8zqosBray1l1:3" m:para-id="2-tu4" xml:space="preserve" m:trans-origin="null" m:score="0" m:gross-score="0" m:confirmed="1" m:locked="false" m:level-edited="false" m:created-by="49450" m:created-at="1442824912098" m:modified-by="49450" m:modified-at="1442824934113">
+<source>Copy and share the link for this section</source>
+<target>Nukopijuokite ir bendrinkite šio skyriaus saitą</target>
+<alt-trans origin="machine-trans">
+<target></target>
+</alt-trans>
+<alt-trans origin="memsource-tm">
+<target></target>
+</alt-trans>
+<m:tunit-metadata/>
+<m:tunit-target-metadata/>
+</trans-unit>
+</group>
+</body>
+</file>
+<m:extra>
+<m:users>
+<m:user id="49450" username="MNET\LT_TRA_1" fullname="LT_TRA_1 (Synerg)"/>
+</m:users>
+</m:extra>
+</xliff>
