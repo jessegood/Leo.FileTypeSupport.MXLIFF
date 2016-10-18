@@ -56,11 +56,11 @@ namespace Leo.FileTypeSupport.MXLIFF
         public void VisitText(IText text)
         {
             string segContent = text.Properties.Text;
-            segContent = segContent.Replace("&", "&amp;");
-            segContent = segContent.Replace("<", "&lt;");
-            segContent = segContent.Replace(">", "&gt;");
-            segContent = segContent.Replace("'", "&apos;");
-            segContent = segContent.Replace("\"", "&quot;");
+            //segContent = segContent.Replace("&", "&amp;");
+            //segContent = segContent.Replace("<", "&lt;");
+            //segContent = segContent.Replace(">", "&gt;");
+            //segContent = segContent.Replace("'", "&apos;");
+            //segContent = segContent.Replace("\"", "&quot;");
             PlainText.Append(segContent);
         }
 

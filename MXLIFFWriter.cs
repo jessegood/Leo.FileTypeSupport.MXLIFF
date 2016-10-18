@@ -1,5 +1,6 @@
 ﻿using Sdl.Core.Globalization;
 using Sdl.FileTypeSupport.Framework.BilingualApi;
+using Sdl.FileTypeSupport.Framework.Core.Utilities.NativeApi;
 using Sdl.FileTypeSupport.Framework.NativeApi;
 using System;
 using System.Collections.Generic;
@@ -16,9 +17,8 @@ namespace Leo.FileTypeSupport.MXLIFF
         private IPersistentFileConversionProperties originalFileProperties;
         private XmlDocument targetFile;
         private MXLIFFTextExtractor textExtractor;
-        private int workflowLevel = 0;
         private Dictionary<string, int> users = new Dictionary<string, int>();
-
+        private int workflowLevel = 0;
         public void Complete()
         {
         }
@@ -196,14 +196,36 @@ namespace Leo.FileTypeSupport.MXLIFF
 
                 // Update score value
                 var dbl = matchPercent / 100.0;
-                if (transUnit.Attributes["m:score"] != null)
+                if (transUnit.Attributes["m:score"] != null && transUnit.Attributes["m:gross-score"] != null
+                    && transUnit.Attributes["m:trans-origin"] != null)
                 {
                     transUnit.Attributes["m:score"].Value = dbl.ToString();
+                    transUnit.Attributes["m:gross-score"].Value = dbl.ToString();
                 }
                 else
                 {
                     transUnit.Attributes.Append(transUnit.OwnerDocument.CreateAttribute("m:score"));
+                    transUnit.Attributes.Append(transUnit.OwnerDocument.CreateAttribute("m:gross-score"));
                     transUnit.Attributes["m:score"].Value = dbl.ToString();
+                    transUnit.Attributes["m:gross-score"].Value = dbl.ToString();
+                }
+
+                var transOrigin = segmentPair?.Target?.Properties?.TranslationOrigin;
+                if (transOrigin != null)
+                {
+                    var memSourceTransOrigin = transUnit.Attributes["m:trans-origin"];
+
+                    if (memSourceTransOrigin != null)
+                    {
+                        if (transOrigin.OriginType == DefaultTranslationOrigin.TranslationMemory)
+                        {
+                            memSourceTransOrigin.Value = DefaultTranslationOrigin.TranslationMemory;
+                        }
+                        else if (transOrigin.OriginType == DefaultTranslationOrigin.MachineTranslation)
+                        {
+                            memSourceTransOrigin.Value = DefaultTranslationOrigin.MachineTranslation;
+                        }
+                    }
                 }
 
                 // Update m:locked
