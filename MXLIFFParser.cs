@@ -9,18 +9,19 @@
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Linq;
     using System.Text.RegularExpressions;
     using System.Xml;
 
     internal class MXLIFFParser : AbstractBilingualFileTypeComponent, IBilingualParser, INativeContentCycleAware, ISettingsAware
     {
+        private readonly Queue<int> tagIds = new Queue<int>();
+        private readonly Dictionary<int, IPlaceholderTagProperties> tags = new Dictionary<int, IPlaceholderTagProperties>();
         private readonly Dictionary<int, string> users = new Dictionary<int, string>();
         private XmlDocument document;
         private IDocumentProperties documentProperties;
         private IFileProperties fileProperties;
         private XmlNamespaceManager nsmgr;
-        private int srcSegmentTagCount;
-        private int tmpTotalTagCount;
         private int totalTagCount;
         private int workflowLevel = 0;
 
@@ -81,7 +82,10 @@
                 int currentUnitCount = 0;
                 foreach (XmlNode item in xmlNodeList)
                 {
-                    Output.ProcessParagraphUnit(CreateParagraphUnit(item));
+                    foreach(var unit in CreateParagraphUnit(item))
+                    {
+                        Output.ProcessParagraphUnit(unit);
+                    }
 
                     // Update the progress report
                     currentUnitCount++;
@@ -193,7 +197,15 @@
                     }
                     else
                     {
-                        sdlxliffLevel = ConfirmationLevel.Draft;
+                        var target = transUnit.SelectSingleNode("x:target", nsmgr);
+                        if (target != null && !string.IsNullOrWhiteSpace(target.InnerText))
+                        {
+                            sdlxliffLevel = ConfirmationLevel.Draft;
+                        }
+                        else
+                        {
+                            sdlxliffLevel = ConfirmationLevel.Unspecified;
+                        }
                     }
                 }
             }
@@ -241,99 +253,110 @@
             return matchValue;
         }
 
-        private IParagraphUnit CreateParagraphUnit(XmlNode xmlUnit)
+        private List<IParagraphUnit> CreateParagraphUnit(XmlNode xmlUnit)
         {
-            // Create paragraph unit object
-            IParagraphUnit paragraphUnit = ItemFactory.CreateParagraphUnit(LockTypeFlags.Unlocked);
+            List<IParagraphUnit> units = new List<IParagraphUnit>();
 
-            var xmlNode = xmlUnit.SelectSingleNode("x:trans-unit", nsmgr);
+            var xmlNodes = xmlUnit.SelectNodes("x:trans-unit", nsmgr);
 
-            if (xmlNode != null)
+            foreach (XmlNode xmlNode in xmlNodes)
             {
-                var id = xmlNode.Attributes["id"];
-                var paraId = xmlNode.Attributes["m:para-id"];
+                // Create paragraph unit object
+                IParagraphUnit paragraphUnit = ItemFactory.CreateParagraphUnit(LockTypeFlags.Unlocked);
 
-                if (id != null && paraId != null)
+                if (xmlNode != null)
                 {
-                    paragraphUnit.Properties.Contexts = CreateContext(id.Value, paraId.Value);
-                }
+                    var id = xmlNode.Attributes["id"];
+                    var paraId = xmlNode.Attributes["m:para-id"];
 
-                // Create segment pair object
-                ISegmentPairProperties segmentPairProperties = ItemFactory.CreateSegmentPairProperties();
-                ITranslationOrigin tuOrg = ItemFactory.CreateTranslationOrigin();
-
-                // Assign the appropriate confirmation level to the segment pair
-                segmentPairProperties.ConfirmationLevel = CreateConfirmationLevel(xmlNode);
-                tuOrg.MatchPercent = CreateMatchValue(xmlNode);
-
-                // Add source segment to paragraph unit
-                ISegment srcSegment = CreateSegment(xmlNode.SelectSingleNode("x:source", nsmgr), segmentPairProperties, true);
-                paragraphUnit.Source.Add(srcSegment);
-
-                // Add target segment to paragraph unit if available
-                if (xmlNode.SelectSingleNode("x:target", nsmgr) != null)
-                {
-                    ISegment trgSegment = CreateSegment(xmlNode.SelectSingleNode("x:target", nsmgr), segmentPairProperties, false);
-
-                    // Check if locked
-                    var locked = xmlNode.Attributes["m:locked"];
-                    if (locked != null && locked.Value == "true")
+                    if (id != null && paraId != null)
                     {
-                        trgSegment.Properties.IsLocked = true;
+                        paragraphUnit.Properties.Contexts = CreateContext(id.Value, paraId.Value);
                     }
 
-                    // Check if target empty and look for alt-trans
-                    if (trgSegment.Count == 0)
+                    // Create segment pair object
+                    ISegmentPairProperties segmentPairProperties = ItemFactory.CreateSegmentPairProperties();
+                    ITranslationOrigin tuOrg = ItemFactory.CreateTranslationOrigin();
+
+                    // Assign the appropriate confirmation level to the segment pair
+                    segmentPairProperties.ConfirmationLevel = CreateConfirmationLevel(xmlNode);
+                    tuOrg.MatchPercent = CreateMatchValue(xmlNode);
+
+                    // Add source segment to paragraph unit
+                    ISegment srcSegment = CreateSegment(xmlNode.SelectSingleNode("x:source", nsmgr), segmentPairProperties, true);
+
+                    paragraphUnit.Source.Add(srcSegment);
+
+                    // Add target segment to paragraph unit if available
+                    if (xmlNode.SelectSingleNode("x:target", nsmgr) != null)
                     {
-                        var alttrans = xmlNode.SelectSingleNode("x:alt-trans/x:target", nsmgr);
-                        if (alttrans != null && !string.IsNullOrWhiteSpace(alttrans.InnerText))
+                        ISegment trgSegment = CreateSegment(xmlNode.SelectSingleNode("x:target", nsmgr), segmentPairProperties, false);
+
+                        // Check if locked
+                        var locked = xmlNode.Attributes["m:locked"];
+                        if (locked != null && locked.Value == "true")
                         {
-                            PopulateSegment(trgSegment, alttrans, false);
+                            trgSegment.Properties.IsLocked = true;
+                        }
 
-                            var alttransOrigin = xmlNode.SelectSingleNode("x:alt-trans", nsmgr).Attributes["origin"];
-                            if (alttransOrigin != null)
+                        // Check if target empty and look for alt-trans
+                        if (trgSegment.Count == 0)
+                        {
+                            var alttrans = xmlNode.SelectSingleNode("x:alt-trans/x:target", nsmgr);
+                            if (alttrans != null && !string.IsNullOrWhiteSpace(alttrans.InnerText))
                             {
-                                var origin = alttransOrigin.Value;
-                                if (origin.Contains("machine") || origin.Contains("mt"))
-                                {
-                                    tuOrg.OriginType = DefaultTranslationOrigin.MachineTranslation;
-                                }
-                                else if (origin.Contains("tm"))
-                                {
-                                    tuOrg.OriginType = DefaultTranslationOrigin.TranslationMemory;
-                                }
+                                PopulateSegment(trgSegment, alttrans, false);
 
-                                tuOrg.OriginSystem = origin;
+                                var alttransOrigin = xmlNode.SelectSingleNode("x:alt-trans", nsmgr).Attributes["origin"];
+                                if (alttransOrigin != null)
+                                {
+                                    var origin = alttransOrigin.Value;
+                                    if (origin.Contains("machine") || origin.Contains("mt"))
+                                    {
+                                        tuOrg.OriginType = DefaultTranslationOrigin.MachineTranslation;
+                                    }
+                                    else if (origin.Contains("tm"))
+                                    {
+                                        tuOrg.OriginType = DefaultTranslationOrigin.TranslationMemory;
+                                    }
+
+                                    tuOrg.OriginSystem = origin;
+                                }
                             }
                         }
+
+                        paragraphUnit.Target.Add(trgSegment);
+                    }
+                    else
+                    {
+                        var singleNode = xmlNode.SelectSingleNode("x:source", nsmgr);
+                        if (singleNode != null) singleNode.InnerText = "";
+                        ISegment trgSegment = CreateSegment(xmlNode.SelectSingleNode("x:source", nsmgr), segmentPairProperties, false);
+                        paragraphUnit.Target.Add(trgSegment);
                     }
 
-                    paragraphUnit.Target.Add(trgSegment);
-                }
-                else
-                {
-                    var singleNode = xmlNode.SelectSingleNode("x:source", nsmgr);
-                    if (singleNode != null) singleNode.InnerText = "";
-                    ISegment trgSegment = CreateSegment(xmlNode.SelectSingleNode("x:source", nsmgr), segmentPairProperties, false);
-                    paragraphUnit.Target.Add(trgSegment);
+                    var transOrigin = xmlNode.Attributes["m:trans-origin"];
+                    if (transOrigin.Value != null && transOrigin.Value != "null")
+                    {
+                        tuOrg.OriginType = transOrigin.Value;
+                    }
+
+                    segmentPairProperties.TranslationOrigin = tuOrg;
+
+                    // Add comments
+                    if (xmlNode.SelectSingleNode("m:comment", nsmgr) != null)
+                    {
+                        paragraphUnit.Properties.Comments = CreateComment(xmlNode.SelectSingleNode("m:comment", nsmgr));
+                    }
                 }
 
-                var transOrigin = xmlNode.Attributes["m:trans-origin"];
-                if (transOrigin.Value != null && transOrigin.Value != "null")
-                {
-                    tuOrg.OriginType = transOrigin.Value;
-                }
+                // Clear any ids on the queue
+                tagIds.Clear();
 
-                segmentPairProperties.TranslationOrigin = tuOrg;
-
-                // Add comments
-                if (xmlNode.SelectSingleNode("m:comment", nsmgr) != null)
-                {
-                    paragraphUnit.Properties.Comments = CreateComment(xmlNode.SelectSingleNode("m:comment", nsmgr));
-                }
+                units.Add(paragraphUnit);
             }
 
-            return paragraphUnit;
+            return units;
         }
 
         private IPlaceholderTag CreatePhTag(string tagContent, int tagNo, bool source)
@@ -347,42 +370,65 @@
 
             if (source)
             {
-                var thisId =
-                    new TagId(totalTagCount.ToString(CultureInfo.InvariantCulture));
+                var thisId = new TagId(totalTagCount.ToString(CultureInfo.InvariantCulture));
 
                 phTagProperties.TagId = thisId;
-                totalTagCount += 1;
-                tmpTotalTagCount += 1;
-                srcSegmentTagCount += 1;
+
+                if (tags.ContainsKey(int.Parse(thisId.Id)) && !tags.ContainsValue(phTagProperties))
+                {
+                    totalTagCount = CreatePlaceholderTagHelper(thisId, phTagProperties);
+                }
+
+                if (!(tags.ContainsKey(int.Parse(thisId.Id)) && tags.ContainsValue(phTagProperties)))
+                {
+                    tags.Add(totalTagCount, phTagProperties);
+                }
+
+                tagIds.Enqueue(totalTagCount);
+
+                totalTagCount++;
             }
             else
             {
-                var thisId =
-                    new TagId(totalTagCount.ToString(CultureInfo.InvariantCulture));
+                int id;
+                if (tagIds.Count != 0)
+                {
+                    id = tagIds.Dequeue();
+                }
+                else
+                {
+                    id = totalTagCount++;
+                }
+
+
+                var thisId = new TagId(id.ToString(CultureInfo.InvariantCulture));
 
                 phTagProperties.TagId = thisId;
-                totalTagCount += 1;
+
+                if (tags.ContainsKey(int.Parse(thisId.Id)) && !tags.ContainsValue(phTagProperties))
+                {
+                    totalTagCount = CreatePlaceholderTagHelper(thisId, phTagProperties);
+                }
             }
 
             return phTag;
         }
 
+        private int CreatePlaceholderTagHelper(TagId placeholderId, IPlaceholderTagProperties phTagProperties)
+        {
+            var max = tags.Keys.Max();
+            var id = max + 1;
+            placeholderId.Id = id.ToString();
+            phTagProperties.TagId = placeholderId;
+
+            tags.Add(id, phTagProperties);
+
+            return id;
+        }
+
         private ISegment CreateSegment(XmlNode segNode, ISegmentPairProperties pair, bool source)
         {
             ISegment segment = ItemFactory.CreateSegment(pair);
-
-            if (source)
-            {
-                srcSegmentTagCount = 0;
-                if (totalTagCount < tmpTotalTagCount)
-                {
-                    totalTagCount = tmpTotalTagCount;
-                }
-            }
-            else
-            {
-                totalTagCount = totalTagCount - srcSegmentTagCount;
-            }
 
             PopulateSegment(segment, segNode, source);
 
@@ -404,9 +450,9 @@
             {
                 if (item.NodeType == XmlNodeType.Text)
                 {
-                    foreach (var chunk in Regex.Split(item.InnerText, "((?:{|<)[a-z0-9]{1,2}(?:>|}))"))
+                    foreach (var chunk in Regex.Split(item.InnerText, @"((?:{|<)\^*[a-z0-9]{0,2}(?:>|}))"))
                     {
-                        if (Regex.IsMatch(chunk, "((?:{|<)[a-z0-9]{1,2}(?:>|}))"))
+                        if (Regex.IsMatch(chunk, @"((?:{|<)\^*[a-z0-9]{0,2}(?:>|}))"))
                         {
                             segment.Add(CreatePhTag(chunk, i, source));
                             i++;

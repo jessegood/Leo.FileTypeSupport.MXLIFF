@@ -126,7 +126,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="bil.ico" />
+    <EmbeddedResource Include="..\..\..\..\Desktop\bil.ico">
+      <Link>bil.ico</Link>
+    </EmbeddedResource>
     <EmbeddedResource Include="PluginResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>PluginResources.Designer.cs</LastGenOutput>
@@ -147,7 +149,9 @@
     </ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="pluginpackage.manifest.xml" />
+    <Content Include="pluginpackage.manifest.xml">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
