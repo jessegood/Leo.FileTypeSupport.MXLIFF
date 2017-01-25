@@ -84,7 +84,7 @@ namespace Leo.FileTypeSupport.MXLIFF
                     var id = user.Attributes["id"]?.Value;
                     var username = user.Attributes["username"]?.Value;
 
-                    users.Add(username, id != null ? Convert.ToInt32(id) : 0);
+                    users.Add(username ?? string.Empty, id != null ? Convert.ToInt32(id) : 0);
                 }
             }
         }
@@ -125,7 +125,7 @@ namespace Leo.FileTypeSupport.MXLIFF
                         break;
 
                     case ConfirmationLevel.ApprovedSignOff:
-                        transUnit.Attributes["m:confirmed"].Value = "0";
+                        transUnit.Attributes["m:confirmed"].Value = "1";
                         break;
 
                     default:

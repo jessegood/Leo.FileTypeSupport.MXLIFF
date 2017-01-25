@@ -247,7 +247,7 @@
 
             if (score != null)
             {
-                matchValue = Convert.ToByte(Convert.ToDouble(score.Value) * 100);
+                matchValue = Convert.ToByte(Convert.ToDouble(score.Value, CultureInfo.InvariantCulture.NumberFormat) * 100);
             }
 
             return matchValue;
