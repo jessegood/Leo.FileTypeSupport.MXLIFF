@@ -4,6 +4,7 @@ using Sdl.FileTypeSupport.Framework.Core.Utilities.NativeApi;
 using Sdl.FileTypeSupport.Framework.NativeApi;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -18,7 +19,7 @@ namespace Leo.FileTypeSupport.MXLIFF
         private IPersistentFileConversionProperties originalFileProperties;
         private XmlDocument targetFile;
         private MXLIFFTextExtractor textExtractor;
-        private Dictionary<string, int> users = new Dictionary<string, int>();
+        private Dictionary<string, string> users = new Dictionary<string, string>();
         private int workflowLevel = 0;
 
         public void Complete()
@@ -84,7 +85,10 @@ namespace Leo.FileTypeSupport.MXLIFF
                     var id = user.Attributes["id"]?.Value;
                     var username = user.Attributes["username"]?.Value;
 
-                    users.Add(username ?? string.Empty, id != null ? Convert.ToInt32(id) : 0);
+                    if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(id) && users.ContainsKey(username))
+                    {
+                        users.Add(username, id);
+                    }
                 }
             }
         }
@@ -429,15 +433,15 @@ namespace Leo.FileTypeSupport.MXLIFF
             if (transUnit.Attributes["m:score"] != null && transUnit.Attributes["m:gross-score"] != null
                 && transUnit.Attributes["m:trans-origin"] != null)
             {
-                transUnit.Attributes["m:score"].Value = dbl.ToString();
-                transUnit.Attributes["m:gross-score"].Value = dbl.ToString();
+                transUnit.Attributes["m:score"].Value = dbl.ToString(CultureInfo.InvariantCulture);
+                transUnit.Attributes["m:gross-score"].Value = dbl.ToString(CultureInfo.InvariantCulture);
             }
             else
             {
                 transUnit.Attributes.Append(transUnit.OwnerDocument.CreateAttribute("m:score"));
                 transUnit.Attributes.Append(transUnit.OwnerDocument.CreateAttribute("m:gross-score"));
-                transUnit.Attributes["m:score"].Value = dbl.ToString();
-                transUnit.Attributes["m:gross-score"].Value = dbl.ToString();
+                transUnit.Attributes["m:score"].Value = dbl.ToString(CultureInfo.InvariantCulture);
+                transUnit.Attributes["m:gross-score"].Value = dbl.ToString(CultureInfo.InvariantCulture);
             }
 
             var transOrigin = segmentPair?.Target?.Properties?.TranslationOrigin;

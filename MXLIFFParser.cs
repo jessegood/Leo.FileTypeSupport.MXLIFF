@@ -17,7 +17,7 @@
     {
         private readonly Queue<int> tagIds = new Queue<int>();
         private readonly Dictionary<int, IPlaceholderTagProperties> tags = new Dictionary<int, IPlaceholderTagProperties>();
-        private readonly Dictionary<int, string> users = new Dictionary<int, string>();
+        private readonly Dictionary<string, string> users = new Dictionary<string, string>();
         private XmlDocument document;
         private IDocumentProperties documentProperties;
         private IFileProperties fileProperties;
@@ -131,7 +131,7 @@
                     var id = user.Attributes["id"]?.Value;
                     var username = user.Attributes["username"]?.Value;
 
-                    users.Add((id != null ? Convert.ToInt32(id) : 0), username);
+                    users.Add(id ?? "_UNKNOWN_", username ?? "_UNKNOWN_");
                 }
             }
         }
@@ -151,7 +151,7 @@
             string author = string.Empty;
             if (createdBy != null)
             {
-                author = users[Convert.ToInt32(createdBy)];
+                author = users[createdBy];
             }
 
             Severity severity = Severity.Low;
